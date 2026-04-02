@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Backend-specific (if nested)
+Backend/node_modules/
+Backend/dist/
+Backend/coverage/
+Backend/.env
+Backend/.env.*
+Backend/!.env.example
+
+# Frontend-specific (if added later)
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.env
+Frontend/.env.*
+Frontend/!.env.example
