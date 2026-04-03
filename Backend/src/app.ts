@@ -1,49 +1,77 @@
 // src/app.ts
-import express from 'express';
-import cors from 'cors';
+import express, { Application, Request, Response } from 'express';
 import helmet from 'helmet';
+import cors from 'cors';
 import morgan from 'morgan';
+import { config } from './config/env';
 import { logger } from './config/logger';
+import { generalLimiter } from './middleware/rateLimiter';
+import { errorHandler } from './middleware/errorHandler';
 import { apiResponse } from '../common/response/ApiResponse';
 
-const app = express();
+// Route modules
+import authRoutes from './modules/auth/auth.routes';
+import userRoutes from './modules/users/user.routes';
+import recordRoutes from './modules/records/record.routes';
+import categoryRoutes from './modules/categories/category.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
 
-// Security middleware
-app.use(helmet());
+export const createApp = (): Application => {
+    const app = express();
 
-// CORS configuration
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-}));
+    // ─── Security ────────────────────────────────────────────────────────────────
+    app.use(helmet());
+    app.use(
+        cors({
+            origin: config.cors.origin,
+            methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+            allowedHeaders: ['Content-Type', 'Authorization'],
+            credentials: true,
+        }),
+    );
 
-// Request logging
+    // ─── Body Parsing ─────────────────────────────────────────────────────────────
+    app.use(express.json({ limit: '10kb' })); // Hard cap prevents oversized payloads
+    app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
+    // ─── HTTP Request Logging ─────────────────────────────────────────────────────
+    app.use(
+        morgan('combined', {
+            stream: { write: (message) => logger.http(message.trim()) },
+            skip: () => config.app.nodeEnv === 'test',
+        }),
+    );
 
-// Rate limiting
+    // ─── Global Rate Limiter ──────────────────────────────────────────────────────
+    app.use('/api', generalLimiter);
 
+    // ─── Health Check ─────────────────────────────────────────────────────────────
+    app.get('/health', (_req: Request, res: Response) => {
+        res.status(200).json(
+            apiResponse.success({
+                status: 'ok',
+                environment: config.app.nodeEnv,
+                timestamp: new Date().toISOString(),
+            }),
+        );
+    });
 
-// Body parsing
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+    // ─── API Routes ───────────────────────────────────────────────────────────────
+    app.use('/api/v1/auth', authRoutes);
+    app.use('/api/v1/users', userRoutes);
+    app.use('/api/v1/records', recordRoutes);
+    app.use('/api/v1/categories', categoryRoutes);
+    app.use('/api/v1/dashboard', dashboardRoutes);
 
-// HTTP request logging
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
+    // ─── 404 Handler ─────────────────────────────────────────────────────────────
+    app.use((req: Request, res: Response) => {
+        res.status(404).json(
+            apiResponse.error('NOT_FOUND', `Route ${req.method} ${req.path} not found`),
+        );
+    });
 
-// API routes
+    // ─── Global Error Handler (must be last) ─────────────────────────────────────
+    app.use(errorHandler);
 
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json(apiResponse.success({ status: 'healthy', timestamp: new Date().toISOString() }));
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json(apiResponse.error('NOT_FOUND', `Route ${req.method} ${req.originalUrl} not found`));
-});
-
-// Error handling middleware
-
-
-export default app;
+    return app;
+};
