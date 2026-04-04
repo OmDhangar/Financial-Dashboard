@@ -60,7 +60,7 @@ export class RecordRepository {
 
         const skip = (Number(query.page) - 1) * Number(query.limit);
         const orderBy: Prisma.RecordOrderByWithRelationInput = {
-            [Number(query.sortBy)]: query.sortOrder,
+            [query.sortBy]: query.sortOrder,
         };
 
         const [records, total] = await Promise.all([

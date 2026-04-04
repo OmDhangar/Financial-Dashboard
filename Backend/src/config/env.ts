@@ -18,7 +18,7 @@ export const config = {
         expiresIn: env.get('JWT_EXPIRES_IN').default('7d').asString(),
     },
     cors: {
-        origin: env.get('CORS_ORIGIN').default('http://localhost:3001').asString(),
+        origin: env.get('CORS_ORIGIN').default('http://localhost:8080').asString(),
     },
     rateLimit: {
         windowMs: env.get('RATE_LIMIT_WINDOW_MS').default('900000').asIntPositive(),
