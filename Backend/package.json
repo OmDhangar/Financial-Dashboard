@@ -19,7 +19,8 @@
         "prisma:deploy": "prisma migrate deploy",
         "prisma:seed": "ts-node prisma/seed.ts",
         "prisma:studio": "prisma studio",
-        "test:smoke": "npx ts-node scripts/smoke-test.ts"
+        "test:smoke": "npx ts-node scripts/smoke-test.ts",
+        "postinstall": "npm run build"
     },
     "dependencies": {
         "@prisma/client": "5.22.0",
