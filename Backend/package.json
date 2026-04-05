@@ -40,17 +40,15 @@
         "jsonwebtoken": "^9.0.2",
         "morgan": "^1.10.0",
         "swagger-ui-express": "^5.0.1",
+        "@types/swagger-ui-express": "^4.1.8",
         "typescript": "^5.4.2",
         "winston": "^3.13.0",
-        "yamljs": "^0.3.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {
         "@types/jest": "^29.5.14",
         "@types/mocha": "^10.0.10",
         "@types/supertest": "^6.0.2",
-        "@types/swagger-ui-express": "^4.1.8",
-        "@types/yamljs": "^0.2.34",
         "@typescript-eslint/eslint-plugin": "^7.2.0",
         "@typescript-eslint/parser": "^7.2.0",
         "eslint": "^8.57.0",
