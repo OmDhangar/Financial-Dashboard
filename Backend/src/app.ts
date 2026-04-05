@@ -66,7 +66,7 @@ export const createApp = (): Application => {
     app.use('/api/v1/dashboard', dashboardRoutes);
 
     // ─── API Documentation ────────────────────────────────────────────────────────
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api-docs', ...swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
     // ─── 404 Handler ─────────────────────────────────────────────────────────────
     app.use((req: Request, res: Response) => {
