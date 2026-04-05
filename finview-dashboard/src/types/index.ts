@@ -23,6 +23,7 @@ export interface FinancialRecord {
   createdBy: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string;
 }
 
 export interface Category {
@@ -36,6 +37,7 @@ export interface DashboardSummary {
   totalExpense: string;
   netBalance: string;
   transactionCount: number;
+  isPersonal?: boolean;
 }
 
 export interface Trend {
@@ -58,6 +60,16 @@ export interface PaginationMeta {
   limit: number;
   total: number;
   totalPages: number;
+}
+
+export interface UserExpense {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  totalExpense: string;
+  totalIncome: string;
+  netBalance: string;
+  transactionCount: number;
 }
 
 export interface ApiSuccessResponse<T> {
@@ -93,6 +105,7 @@ export interface RecordFilters {
   startDate?: string;
   endDate?: string;
   search?: string;
+  includeDeleted?: boolean;
   page?: number;
   limit?: number;
 }

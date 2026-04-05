@@ -159,9 +159,10 @@ curl -X POST http://localhost:3000/api/v1/auth/login \
 |---|---|---|---|
 | GET | `/records` | VIEWER+ | List records (paginated, filterable) |
 | GET | `/records/:id` | VIEWER+ | Get a single record |
-| POST | `/records` | ADMIN | Create a record |
-| PATCH | `/records/:id` | ADMIN | Update a record |
-| DELETE | `/records/:id` | ADMIN | Soft-delete a record |
+| POST | `/records` | VIEWER+ | Create a record |
+| PATCH | `/records/:id` | VIEWER+ | Update own record (ADMIN can update any) |
+| DELETE | `/records/:id` | VIEWER+ | Soft-delete own record (ADMIN can delete any) |
+| POST | `/records/:id/restore` | ADMIN | Restore a deleted record |
 
 **Query params for GET /records:**
 - `type` — `INCOME` or `EXPENSE`
@@ -178,12 +179,27 @@ curl -X POST http://localhost:3000/api/v1/auth/login \
 
 | Method | Path | Access | Description |
 |---|---|---|---|
-| GET | `/dashboard/summary` | ANALYST+ | Income, expense, net balance |
-| GET | `/dashboard/trends` | ANALYST+ | Monthly income vs expense |
-| GET | `/dashboard/categories` | ANALYST+ | Breakdown by category |
-| GET | `/dashboard/recent` | VIEWER+ | Latest transactions |
+| GET | `/dashboard/summary` | VIEWER+ | personal summary (VIEWER) / global (ANALYST+) |
+| GET | `/dashboard/trends` | VIEWER+ | Monthly trends (VIEWER: personal / ANALYST+: global) |
+| GET | `/dashboard/categories` | VIEWER+ | Category breakdown (?userId for ANALYST+) |
+| GET | `/dashboard/recent` | VIEWER+ | Latest transactions (personal for VIEWER) |
+| GET | `/dashboard/by-user` | ANALYST+ | Aggregated income/expense/balance per user |
 
-**Summary query params:** `period` (weekly/monthly/yearly), `year`, `month`
+**Summary query params:** `period` (weekly/monthly/yearly), `year`, `month`, `startDate`, `endDate`
+
+---
+
+### User Endpoints
+
+| Method | Path | Access | Description |
+|---|---|---|---|
+| GET | `/users` | ANALYST+ | List all active users |
+| GET | `/users/:id` | ANALYST+ | Get a specific user's profile |
+| POST | `/users` | ADMIN | Create a new user |
+| PATCH | `/users/:id` | ADMIN | Update user profile |
+| PATCH | `/users/:id/role` | ADMIN | Change user role |
+| PATCH | `/users/:id/status` | ADMIN | Change user status (ACTIVE/INACTIVE) |
+| DELETE | `/users/:id` | ADMIN | Soft-delete a user |
 
 ---
 
@@ -217,12 +233,17 @@ All responses follow a consistent shape:
 | Action | VIEWER | ANALYST | ADMIN |
 |---|:---:|:---:|:---:|
 | View own profile | ✓ | ✓ | ✓ |
-| View records | ✓ | ✓ | ✓ |
-| View recent activity | ✓ | ✓ | ✓ |
-| View dashboard summary | — | ✓ | ✓ |
-| View trends & categories | — | ✓ | ✓ |
-| Create / Update / Delete records | — | — | ✓ |
-| Manage users | — | — | ✓ |
+| View records | ✓ (own) | ✓ (all) | ✓ (all) |
+| Create records | ✓ | ✓ | ✓ |
+| Update / Delete records | ✓ (own) | ✓ (own) | ✓ (all) |
+| View recent activity | ✓ (own) | ✓ (all) | ✓ (all) |
+| View dashboard summary | ✓ (own) | ✓ (all) | ✓ (all) |
+| View trends & categories | ✓ (own) | ✓ (all*) | ✓ (all*) |
+| View user list / details | — | ✓ | ✓ |
+| Manage users (roles/status) | — | — | ✓ |
+| Restore deleted records | — | — | ✓ |
+
+\* *ANALYST and ADMIN can filter category-based analytics by specific users using `?userId=...`.*
 
 ---
 

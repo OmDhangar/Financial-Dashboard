@@ -80,13 +80,32 @@ export default function UsersPage() {
     }
   };
 
-  const handleRoleChange = async (id: string, role: Role) => {
+  const [roleChangeUser, setRoleChangeUser] = useState<User | null>(null);
+  const [newRole, setNewRole] = useState<Role>("VIEWER");
+  const [changingRole, setChangingRole] = useState(false);
+  const [roleError, setRoleError] = useState("");
+
+  // Sync role when dialog opens
+  useEffect(() => {
+    if (roleChangeUser) {
+      setNewRole(roleChangeUser.role);
+      setRoleError("");
+    }
+  }, [roleChangeUser]);
+
+  const submitRoleChange = async () => {
+    if (!roleChangeUser) return;
+    setChangingRole(true);
+    setRoleError("");
     try {
-      await usersService.updateRole(id, role);
+      await usersService.updateRole(roleChangeUser.id, newRole);
       toast.success("Role updated");
+      setRoleChangeUser(null);
       fetchUsers();
-    } catch {
-      toast.error("Failed to update role");
+    } catch (err: any) {
+      setRoleError(err?.response?.data?.error?.message || "Failed to update role");
+    } finally {
+      setChangingRole(false);
     }
   };
 
@@ -182,9 +201,7 @@ export default function UsersPage() {
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-card border-border">
-                          <DropdownMenuItem onClick={() => handleRoleChange(u.id, "ADMIN")} className="text-sm">Set Admin</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleRoleChange(u.id, "ANALYST")} className="text-sm">Set Analyst</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleRoleChange(u.id, "VIEWER")} className="text-sm">Set Viewer</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setRoleChangeUser(u)} className="text-sm">Change Role</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleStatusToggle(u)} className="text-sm">
                             {u.status === "ACTIVE" ? "Deactivate" : "Activate"}
                           </DropdownMenuItem>
@@ -202,6 +219,41 @@ export default function UsersPage() {
           </>
         )}
       </Card>
+
+      {/* Role Change Dialog */}
+      <Dialog open={!!roleChangeUser} onOpenChange={(o) => (!o) && setRoleChangeUser(null)}>
+        <DialogContent className="bg-card border-border sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Change Role</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <p className="text-sm font-medium text-foreground">{roleChangeUser?.name}</p>
+              <p className="text-xs text-muted-foreground">{roleChangeUser?.email}</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Select New Role</label>
+              <Select value={newRole} onValueChange={(val) => setNewRole(val as Role)}>
+                <SelectTrigger className="bg-secondary border-border w-full">
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="ANALYST">Analyst</SelectItem>
+                  <SelectItem value="VIEWER">Viewer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {roleError && <p className="text-sm text-destructive">{roleError}</p>}
+          </div>
+          <div className="flex justify-end gap-2 mt-2">
+            <Button variant="outline" onClick={() => setRoleChangeUser(null)} className="border-border">Cancel</Button>
+            <Button onClick={submitRoleChange} disabled={changingRole || newRole === roleChangeUser?.role}>
+              {changingRole ? "Saving..." : "Save Role"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="bg-card border-border sm:max-w-md">
@@ -240,7 +292,7 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)} title="Delete User" description="This will permanently delete this user." onConfirm={handleDelete} loading={deleting} />
+      <ConfirmDialog open={!!deleteId} onOpenChange={(o) => (!o) && setDeleteId(null)} title="Delete User" description="This will permanently delete this user." onConfirm={handleDelete} loading={deleting} />
     </div>
   );
 }

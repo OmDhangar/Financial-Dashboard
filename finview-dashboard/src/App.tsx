@@ -14,6 +14,8 @@ import RecordsPage from "./pages/Records";
 import UsersPage from "./pages/Users";
 import CategoriesPage from "./pages/Categories";
 import AnalyticsPage from "./pages/Analytics";
+import ExpensesByUserPage from "./pages/ExpensesByUser";
+import CategoryExpensesPage from "./pages/CategoryExpenses";
 import SettingsPage from "./pages/Settings";
 import UnauthorizedPage from "./pages/Unauthorized";
 import NotFound from "./pages/NotFound";
@@ -35,11 +37,13 @@ const App = () => (
 
             {/* Protected routes with layout */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN", "ANALYST"]}><DashboardPage /></ProtectedRoute>} />
+              <Route path="/dashboard" element={<ProtectedRoute allowedRoles={["ADMIN", "ANALYST", "VIEWER"]}><DashboardPage /></ProtectedRoute>} />
               <Route path="/records" element={<RecordsPage />} />
               <Route path="/users" element={<ProtectedRoute allowedRoles={["ADMIN"]}><UsersPage /></ProtectedRoute>} />
               <Route path="/categories" element={<ProtectedRoute allowedRoles={["ADMIN"]}><CategoriesPage /></ProtectedRoute>} />
               <Route path="/analytics" element={<ProtectedRoute allowedRoles={["ADMIN", "ANALYST"]}><AnalyticsPage /></ProtectedRoute>} />
+              <Route path="/analytics/by-user" element={<ProtectedRoute allowedRoles={["ADMIN", "ANALYST"]}><ExpensesByUserPage /></ProtectedRoute>} />
+              <Route path="/analytics/category-expenses" element={<ProtectedRoute allowedRoles={["ADMIN", "ANALYST"]}><CategoryExpensesPage /></ProtectedRoute>} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
 

@@ -1,12 +1,11 @@
-// src/modules/records/record.service.ts
 import { recordRepository } from './record.repository';
 import { categoryRepository } from '../categories/category.repository';
-import { NotFoundError } from '../../../common/errors';
+import { NotFoundError, ForbiddenError } from '../../../common/errors';
 import { CreateRecordDto, UpdateRecordDto, ListRecordsQuery } from './record.schema';
 
 export class RecordService {
-    async listRecords(query: ListRecordsQuery) {
-        return recordRepository.findMany(query);
+    async listRecords(query: ListRecordsQuery, userId: string, role: string) {
+        return recordRepository.findMany(query, role === 'VIEWER' ? userId : undefined);
     }
 
     async getRecordById(id: string) {
@@ -30,9 +29,13 @@ export class RecordService {
         });
     }
 
-    async updateRecord(id: string, dto: UpdateRecordDto) {
+    async updateRecord(id: string, dto: UpdateRecordDto, userId: string, role: string) {
         const record = await recordRepository.findById(id);
         if (!record) throw new NotFoundError('Record');
+
+        if (role !== 'ADMIN' && record.createdBy.id !== userId) {
+            throw new ForbiddenError('You can only update your own records');
+        }
 
         // If category is being changed, validate it exists
         if (dto.categoryId) {
@@ -49,10 +52,19 @@ export class RecordService {
         });
     }
 
-    async deleteRecord(id: string) {
+    async deleteRecord(id: string, userId: string, role: string) {
         const record = await recordRepository.findById(id);
         if (!record) throw new NotFoundError('Record');
+
+        if (role !== 'ADMIN' && record.createdBy.id !== userId) {
+            throw new ForbiddenError('You can only delete your own records');
+        }
+
         return recordRepository.softDelete(id);
+    }
+
+    async restoreRecord(id: string) {
+        return recordRepository.restore(id);
     }
 }
 

@@ -57,7 +57,10 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" description="Overview of your financial activity" />
+      <PageHeader 
+        title={summary?.isPersonal ? "My Dashboard" : "Dashboard"} 
+        description={summary?.isPersonal ? "Overview of your personal financial activity" : "Overview of organizational financial activity"} 
+      />
 
       {/* Metric cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

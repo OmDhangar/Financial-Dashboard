@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { Role, UserStatus } from '@prisma/client';
 import { userRepository } from './user.repository';
 import { NotFoundError, ConflictError, ForbiddenError } from '../../../common/errors';
+import { invalidateUserCache } from '../../middleware/authenticate';
 import {
     CreateUserDto,
     UpdateUserDto,
@@ -75,7 +76,9 @@ export class UserService {
             throw new ForbiddenError('You cannot change your own role');
         }
 
-        return userRepository.update(id, { role: dto.role });
+        const updated = await userRepository.update(id, { role: dto.role });
+        invalidateUserCache(id); // Clear cache so next request picks up new role
+        return updated;
     }
 
     /**
@@ -90,7 +93,9 @@ export class UserService {
             throw new ForbiddenError('You cannot deactivate your own account');
         }
 
-        return userRepository.update(id, { status: dto.status });
+        const updated = await userRepository.update(id, { status: dto.status });
+        invalidateUserCache(id); // Clear cache so inactive users are blocked immediately
+        return updated;
     }
 
     /**

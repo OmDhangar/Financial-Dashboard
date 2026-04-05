@@ -10,6 +10,7 @@ import {
     trendsQuerySchema,
     categoryBreakdownQuerySchema,
     recentQuerySchema,
+    expensesByUserQuerySchema,
 } from './dashboard.schema';
 
 const router = Router();
@@ -18,33 +19,35 @@ router.use(authenticate, dashboardLimiter);
 
 /**
  * @route   GET /api/v1/dashboard/summary
- * @access  ANALYST | ADMIN
+ * @access  VIEWER | ANALYST | ADMIN
+ * VIEWER sees only their own data (scoped in service layer)
  */
 router.get(
     '/summary',
-    authorize('ANALYST', 'ADMIN'),
+    authorize('VIEWER', 'ANALYST', 'ADMIN'),
     validate(summaryQuerySchema),
     (req, res, next) => dashboardController.summary(req, res, next),
 );
 
 /**
  * @route   GET /api/v1/dashboard/trends
- * @access  ANALYST | ADMIN
+ * @access  VIEWER | ANALYST | ADMIN
  */
 router.get(
     '/trends',
-    authorize('ANALYST', 'ADMIN'),
+    authorize('VIEWER', 'ANALYST', 'ADMIN'),
     validate(trendsQuerySchema),
     (req, res, next) => dashboardController.trends(req, res, next),
 );
 
 /**
  * @route   GET /api/v1/dashboard/categories
- * @access  ANALYST | ADMIN
+ * @access  VIEWER | ANALYST | ADMIN
+ * VIEWER: own data only. ANALYST/ADMIN: can pass ?userId= to scope to a specific user.
  */
 router.get(
     '/categories',
-    authorize('ANALYST', 'ADMIN'),
+    authorize('VIEWER', 'ANALYST', 'ADMIN'),
     validate(categoryBreakdownQuerySchema),
     (req, res, next) => dashboardController.categories(req, res, next),
 );
@@ -55,8 +58,21 @@ router.get(
  */
 router.get(
     '/recent',
+    authorize('VIEWER', 'ANALYST', 'ADMIN'),
     validate(recentQuerySchema),
     (req, res, next) => dashboardController.recent(req, res, next),
+);
+
+/**
+ * @route   GET /api/v1/dashboard/by-user
+ * @access  ANALYST | ADMIN
+ * Returns aggregated income/expense/balance per user.
+ */
+router.get(
+    '/by-user',
+    authorize('ANALYST', 'ADMIN'),
+    validate(expensesByUserQuerySchema),
+    (req, res, next) => dashboardController.expensesByUser(req, res, next),
 );
 
 export default router;

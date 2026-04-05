@@ -19,7 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, RotateCcw } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,7 +36,7 @@ const recordSchema = z.object({
 type RecordFormData = z.infer<typeof recordSchema>;
 
 export default function RecordsPage() {
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const isAdmin = role === "ADMIN";
 
   const [records, setRecords] = useState<FinancialRecord[]>([]);
@@ -53,6 +53,7 @@ export default function RecordsPage() {
   const [editingRecord, setEditingRecord] = useState<FinancialRecord | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
 
   const form = useForm<RecordFormData>({ resolver: zodResolver(recordSchema), defaultValues: { amount: "", type: "EXPENSE", categoryId: "", date: "", notes: "" } });
 
@@ -88,7 +89,13 @@ export default function RecordsPage() {
 
   const onSubmit = async (data: RecordFormData) => {
     try {
-      const payload = { amount: data.amount, type: data.type, categoryId: data.categoryId, date: data.date, notes: data.notes };
+      const payload = { 
+        amount: Number(data.amount), 
+        type: data.type, 
+        categoryId: data.categoryId, 
+        date: data.date, 
+        notes: data.notes 
+      };
       if (editingRecord) {
         await recordsService.update(editingRecord.id, payload);
         toast.success("Record updated");
@@ -120,11 +127,24 @@ export default function RecordsPage() {
     }
   };
 
+  const handleRestore = async (id: string) => {
+    setRestoringId(id);
+    try {
+      await recordsService.restore(id);
+      toast.success("Record restored");
+      fetchRecords();
+    } catch {
+      toast.error("Failed to restore record");
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   if (error) return <ErrorState message={error} onRetry={fetchRecords} />;
 
   return (
     <div>
-      <PageHeader title="Records" description="Manage financial transactions" action={isAdmin ? <Button onClick={openCreate} size="sm"><Plus className="h-4 w-4 mr-1" /> Add Record</Button> : undefined} />
+      <PageHeader title="Records" description="Manage financial transactions" action={<Button onClick={openCreate} size="sm"><Plus className="h-4 w-4 mr-1" /> Add Record</Button>} />
 
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
@@ -146,6 +166,16 @@ export default function RecordsPage() {
             {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
+        {isAdmin && (
+          <Button 
+            variant={filters.includeDeleted ? "default" : "outline"} 
+            size="sm" 
+            onClick={() => setFilters(f => ({ ...f, includeDeleted: !f.includeDeleted, page: 1 }))}
+            className={filters.includeDeleted ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "border-border text-muted-foreground"}
+          >
+            Show Deleted
+          </Button>
+        )}
       </div>
 
       <Card className="bg-card border-border overflow-hidden">
@@ -160,32 +190,43 @@ export default function RecordsPage() {
                   <TableHead className="text-muted-foreground text-right">Amount</TableHead>
                   <TableHead className="text-muted-foreground">Notes</TableHead>
                   <TableHead className="text-muted-foreground">Created By</TableHead>
-                  {isAdmin && <TableHead className="text-muted-foreground text-right">Actions</TableHead>}
+                  <TableHead className="text-muted-foreground text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {records.map((r) => (
-                  <TableRow key={r.id} className="border-border">
+                  <TableRow key={r.id} className={`border-border ${r.deletedAt ? "opacity-75 bg-destructive/5" : ""}`}>
                     <TableCell className="text-foreground text-sm">{formatDate(r.date)}</TableCell>
                     <TableCell className="text-foreground text-sm">{r.category.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={r.type === "INCOME" ? "text-[hsl(var(--income))] border-[hsl(var(--income))]/30" : "text-[hsl(var(--expense))] border-[hsl(var(--expense))]/30"}>
                         {r.type}
                       </Badge>
+                      {r.deletedAt && <Badge variant="destructive" className="ml-2 text-[10px] scale-90">DELETED</Badge>}
                     </TableCell>
                     <TableCell className={`text-right font-medium text-sm ${r.type === "INCOME" ? "text-[hsl(var(--income))]" : "text-[hsl(var(--expense))]"}`}>
                       {r.type === "INCOME" ? "+" : "-"}{formatCurrency(r.amount)}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm max-w-[150px] truncate">{r.notes || "—"}</TableCell>
                     <TableCell className="text-muted-foreground text-sm">{r.createdBy.name}</TableCell>
-                    {isAdmin && (
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="h-3 w-3" /></Button>
-                        </div>
-                      </TableCell>
-                    )}
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        {r.deletedAt && isAdmin ? (
+                          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground hover:text-foreground" onClick={() => handleRestore(r.id)} disabled={restoringId === r.id}>
+                            <RotateCcw className="h-3 w-3 mr-1" /> Restore
+                          </Button>
+                        ) : !r.deletedAt ? (
+                          <>
+                            {(isAdmin || r.createdBy.id === user?.id) && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => openEdit(r)}><Pencil className="h-3 w-3" /></Button>
+                            )}
+                            {(isAdmin || r.createdBy.id === user?.id) && (
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(r.id)}><Trash2 className="h-3 w-3" /></Button>
+                            )}
+                          </>
+                        ) : null}
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

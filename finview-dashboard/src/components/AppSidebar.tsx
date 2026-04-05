@@ -17,6 +17,8 @@ const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, key: "dashboard" },
   { title: "Records", url: "/records", icon: FileText, key: "records" },
   { title: "Analytics", url: "/analytics", icon: BarChart3, key: "analytics" },
+  { title: "By User", url: "/analytics/by-user", icon: Users, key: "analytics-by-user" },
+  { title: "By Category", url: "/analytics/category-expenses", icon: FolderOpen, key: "analytics-category" },
   { title: "Users", url: "/users", icon: Users, key: "users" },
   { title: "Categories", url: "/categories", icon: FolderOpen, key: "categories" },
   { title: "Settings", url: "/settings", icon: Settings, key: "settings" },

@@ -8,7 +8,7 @@ export class RecordController {
   async list(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const query = req.query as unknown as ListRecordsQuery;
-      const { records, total } = await recordService.listRecords(query);
+      const { records, total } = await recordService.listRecords(query, req.user!.id, req.user!.role);
       res.status(200).json(apiResponse.paginated(records, Number(query.page), Number(query.limit), total));
     } catch (error) {
       next(error);
@@ -35,7 +35,7 @@ export class RecordController {
 
   async update(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const record = await recordService.updateRecord(req.params.id, req.body as UpdateRecordDto);
+      const record = await recordService.updateRecord(req.params.id, req.body as UpdateRecordDto, req.user!.id, req.user!.role);
       res.status(200).json(apiResponse.success(record));
     } catch (error) {
       next(error);
@@ -44,8 +44,17 @@ export class RecordController {
 
   async delete(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      await recordService.deleteRecord(req.params.id);
+      await recordService.deleteRecord(req.params.id, req.user!.id, req.user!.role);
       res.status(200).json(apiResponse.success({ message: 'Record deleted successfully' }));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async restore(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const record = await recordService.restoreRecord(req.params.id);
+      res.status(200).json(apiResponse.success(record));
     } catch (error) {
       next(error);
     }

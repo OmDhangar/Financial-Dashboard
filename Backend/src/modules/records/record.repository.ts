@@ -11,6 +11,7 @@ const recordWithRelations = {
     notes: true,
     createdAt: true,
     updatedAt: true,
+    deletedAt: true,
     category: { select: { id: true, name: true } },
     createdBy: { select: { id: true, name: true } },
 } as const;
@@ -40,9 +41,18 @@ export class RecordRepository {
         });
     }
 
-    async findMany(query: ListRecordsQuery) {
+    async findMany(query: ListRecordsQuery, userIdScope?: string, isAdmin?: boolean) {
+        let deletedAtFilter: Prisma.DateTimeNullableFilter | null = null;
+        
+        if (isAdmin && query.includeDeleted) {
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            deletedAtFilter = { gte: thirtyDaysAgo };
+        }
+
         const where: Prisma.RecordWhereInput = {
-            deletedAt: null,
+            deletedAt: deletedAtFilter,
+            ...(userIdScope ? { createdById: userIdScope } : {}),
             ...(query.type ? { type: query.type } : {}),
             ...(query.categoryId ? { categoryId: query.categoryId } : {}),
             ...(query.startDate || query.endDate
@@ -104,6 +114,14 @@ export class RecordRepository {
             where: { id },
             data: { deletedAt: new Date() },
             select: { id: true },
+        });
+    }
+
+    async restore(id: string) {
+        return prisma.record.update({
+            where: { id },
+            data: { deletedAt: null },
+            select: recordWithRelations,
         });
     }
 }

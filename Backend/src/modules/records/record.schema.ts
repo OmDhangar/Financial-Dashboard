@@ -44,6 +44,7 @@ export const listRecordsQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(20),
     sortBy: z.enum(['date', 'amount', 'createdAt']).default('date'),
     sortOrder: z.enum(['asc', 'desc']).default('desc'),
+    includeDeleted: z.coerce.boolean().optional(),
 });
 
 export const listRecordsSchema = z.object({

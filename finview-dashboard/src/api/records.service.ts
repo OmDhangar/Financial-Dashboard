@@ -14,6 +14,7 @@ export const recordsService = {
     if (filters.startDate) params.startDate = filters.startDate;
     if (filters.endDate) params.endDate = filters.endDate;
     if (filters.search) params.search = filters.search;
+    if (filters.includeDeleted) params.includeDeleted = 1;
     params.page = filters.page || 1;
     params.limit = filters.limit || 10;
 
@@ -26,17 +27,22 @@ export const recordsService = {
     return res.data.data;
   },
 
-  async create(payload: { amount: string; type: string; categoryId: string; date: string; notes?: string }) {
+  async create(payload: { amount: number; type: string; categoryId: string; date: string; notes?: string }) {
     const res = await apiClient.post<ApiSuccessResponse<FinancialRecord>>("/records", payload);
     return res.data.data;
   },
 
-  async update(id: string, payload: Partial<{ amount: string; type: string; categoryId: string; date: string; notes?: string }>) {
+  async update(id: string, payload: Partial<{ amount: number; type: string; categoryId: string; date: string; notes?: string }>) {
     const res = await apiClient.patch<ApiSuccessResponse<FinancialRecord>>(`/records/${id}`, payload);
     return res.data.data;
   },
 
   async delete(id: string) {
     await apiClient.delete(`/records/${id}`);
+  },
+
+  async restore(id: string) {
+    const res = await apiClient.post<ApiSuccessResponse<FinancialRecord>>(`/records/${id}/restore`);
+    return res.data.data;
   },
 };

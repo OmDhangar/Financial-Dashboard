@@ -21,4 +21,15 @@ export const dashboardService = {
     const res = await apiClient.get<ApiSuccessResponse<FinancialRecord[]>>("/dashboard/recent");
     return res.data.data;
   },
+
+  async getCategoryExpenses(userId?: string) {
+    const params = userId ? { userId } : {};
+    const res = await apiClient.get<ApiSuccessResponse<CategoryBreakdown[]>>("/dashboard/categories", { params });
+    return res.data.data;
+  },
+
+  async getExpensesByUser() {
+    const res = await apiClient.get<ApiSuccessResponse<any[]>>("/dashboard/by-user");
+    return res.data.data;
+  },
 };

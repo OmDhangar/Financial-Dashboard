@@ -63,9 +63,9 @@ model Record {
   updatedAt   DateTime   @updatedAt @map("updated_at")
   deletedAt   DateTime?  @map("deleted_at")
 
-  @@index([type])
-  @@index([categoryId])
-  @@index([date])
-  @@index([createdById])
+  @@index([deletedAt, date])
+  @@index([deletedAt, createdById])
+  @@index([deletedAt, categoryId])
+  @@index([deletedAt, type, date])
   @@map("records")
 }

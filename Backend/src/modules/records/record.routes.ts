@@ -33,26 +33,34 @@ router.get('/:id', validate(recordIdParamSchema), (req, res, next) =>
 
 /**
  * @route   POST /api/v1/records
- * @access  ADMIN
+ * @access  VIEWER | ANALYST | ADMIN
  */
-router.post('/', authorize('ADMIN'), validate(createRecordSchema), (req, res, next) =>
+router.post('/', authorize('VIEWER', 'ANALYST', 'ADMIN'), validate(createRecordSchema), (req, res, next) =>
     recordController.create(req, res, next),
 );
 
 /**
  * @route   PATCH /api/v1/records/:id
- * @access  ADMIN
+ * @access  VIEWER | ANALYST | ADMIN
  */
-router.patch('/:id', authorize('ADMIN'), validate(updateRecordSchema), (req, res, next) =>
+router.patch('/:id', authorize('VIEWER', 'ANALYST', 'ADMIN'), validate(updateRecordSchema), (req, res, next) =>
     recordController.update(req, res, next),
 );
 
 /**
  * @route   DELETE /api/v1/records/:id
+ * @access  VIEWER | ANALYST | ADMIN
+ */
+router.delete('/:id', authorize('VIEWER', 'ANALYST', 'ADMIN'), validate(recordIdParamSchema), (req, res, next) =>
+    recordController.delete(req, res, next),
+);
+
+/**
+ * @route   POST /api/v1/records/:id/restore
  * @access  ADMIN
  */
-router.delete('/:id', authorize('ADMIN'), validate(recordIdParamSchema), (req, res, next) =>
-    recordController.delete(req, res, next),
+router.post('/:id/restore', authorize('ADMIN'), validate(recordIdParamSchema), (req, res, next) =>
+    recordController.restore(req, res, next),
 );
 
 export default router;
