@@ -15,6 +15,8 @@ import userRoutes from './modules/users/user.routes';
 import recordRoutes from './modules/records/record.routes';
 import categoryRoutes from './modules/categories/category.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerDocument } from './swagger';
 
 export const createApp = (): Application => {
     const app = express();
@@ -62,6 +64,9 @@ export const createApp = (): Application => {
     app.use('/api/v1/records', recordRoutes);
     app.use('/api/v1/categories', categoryRoutes);
     app.use('/api/v1/dashboard', dashboardRoutes);
+
+    // ─── API Documentation ────────────────────────────────────────────────────────
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
     // ─── 404 Handler ─────────────────────────────────────────────────────────────
     app.use((req: Request, res: Response) => {

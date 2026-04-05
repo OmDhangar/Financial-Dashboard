@@ -1,8 +1,16 @@
 import axios from "axios";
 import { toast } from "sonner";
 
+const getBaseURL = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (!envUrl) return "http://localhost:3000/api/v1";
+  // Ensure the URL ends without a slash before appending /api/v1
+  const cleanUrl = envUrl.replace(/\/$/, "");
+  return cleanUrl.endsWith("/api/v1") ? cleanUrl : `${cleanUrl}/api/v1`;
+};
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1",
+  baseURL: getBaseURL(),
   headers: { "Content-Type": "application/json" },
 });
 
